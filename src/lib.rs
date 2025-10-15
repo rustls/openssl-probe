@@ -47,6 +47,8 @@ pub fn candidate_cert_dirs() -> impl Iterator<Item = &'static Path> {
         "/data/data/com.termux/files/usr/etc/tls",
         #[cfg(target_os = "haiku")]
         "/boot/system/data/ssl",
+        #[cfg(target_env = "ohos")]
+        "/etc/security/certificates",
     ]
     .iter()
     .map(Path::new)

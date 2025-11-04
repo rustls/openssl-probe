@@ -7,6 +7,38 @@ pub const ENV_CERT_FILE: &'static str = "SSL_CERT_FILE";
 /// The OpenSSL environment variable to configure what certificates directory to use.
 pub const ENV_CERT_DIR: &'static str = "SSL_CERT_DIR";
 
+// see http://gagravarr.org/writing/openssl-certs/others.shtml
+#[cfg(not(target_os = "freebsd"))]
+const CANDIDATE_CERT_DIRS: &'static [&'static str] = &[
+    "/var/ssl",
+    "/usr/share/ssl",
+    "/usr/local/ssl",
+    "/usr/local/openssl",
+    "/usr/local/etc/openssl",
+    "/usr/local/share",
+    "/usr/lib/ssl",
+    "/usr/ssl",
+    "/etc/openssl",
+    "/etc/pki/ca-trust/extracted/pem",
+    "/etc/pki/tls",
+    "/etc/ssl",
+    "/etc/certs",
+    "/opt/etc/ssl", // Entware
+    #[cfg(target_os = "android")]
+    "/data/data/com.termux/files/usr/etc/tls",
+    #[cfg(target_os = "haiku")]
+    "/boot/system/data/ssl",
+];
+
+// see manpage of certctl(8): https://man.freebsd.org/cgi/man.cgi?query=certctl&sektion=8
+// see security/openssl* ports
+#[cfg(target_os = "freebsd")]
+const CANDIDATE_CERT_DIRS: &'static [&'static str] = &[
+    "/etc/ssl",
+    "/usr/local/etc/ssl",
+    "/usr/local/openssl",
+];
+
 pub struct ProbeResult {
     pub cert_file: Option<PathBuf>,
     pub cert_dir: Option<PathBuf>,
@@ -27,27 +59,7 @@ pub fn find_certs_dirs() -> Vec<PathBuf> {
 ///
 /// This will only search known system locations.
 pub fn candidate_cert_dirs() -> impl Iterator<Item = &'static Path> {
-    // see http://gagravarr.org/writing/openssl-certs/others.shtml
-    [
-        "/var/ssl",
-        "/usr/share/ssl",
-        "/usr/local/ssl",
-        "/usr/local/openssl",
-        "/usr/local/etc/openssl",
-        "/usr/local/share",
-        "/usr/lib/ssl",
-        "/usr/ssl",
-        "/etc/openssl",
-        "/etc/pki/ca-trust/extracted/pem",
-        "/etc/pki/tls",
-        "/etc/ssl",
-        "/etc/certs",
-        "/opt/etc/ssl", // Entware
-        #[cfg(target_os = "android")]
-        "/data/data/com.termux/files/usr/etc/tls",
-        #[cfg(target_os = "haiku")]
-        "/boot/system/data/ssl",
-    ]
+    CANDIDATE_CERT_DIRS
     .iter()
     .map(Path::new)
     .filter(|p| p.exists())
@@ -169,6 +181,7 @@ pub fn probe() -> ProbeResult {
     for certs_dir in candidate_cert_dirs() {
         // cert.pem looks to be an openssl 1.0.1 thing, while
         // certs/ca-certificates.crt appears to be a 0.9.8 thing
+        #[cfg(not(target_os = "freebsd"))]
         let cert_filenames = [
             "cert.pem",
             "certs.pem",
@@ -180,6 +193,11 @@ pub fn probe() -> ProbeResult {
             "certs/ca-bundle.crt",
             "CARootCertificates.pem",
             "tls-ca-bundle.pem",
+        ];
+        #[cfg(target_os = "freebsd")]
+        let cert_filenames = [
+            "cert.pem",
+            "ca-root-nss.crt",
         ];
         if result.cert_file.is_none() {
             result.cert_file = cert_filenames

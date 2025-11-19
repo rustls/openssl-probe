@@ -16,16 +16,6 @@ pub struct ProbeResult {
 /// found.
 ///
 /// This will only search known system locations.
-#[doc(hidden)]
-#[deprecated(note = "use `candidate_cert_dirs` instead")]
-pub fn find_certs_dirs() -> Vec<PathBuf> {
-    candidate_cert_dirs().map(Path::to_path_buf).collect()
-}
-
-/// Probe the system for the directory in which CA certificates should likely be
-/// found.
-///
-/// This will only search known system locations.
 pub fn candidate_cert_dirs() -> impl Iterator<Item = &'static Path> {
     // see http://gagravarr.org/writing/openssl-certs/others.shtml
     [
@@ -53,15 +43,6 @@ pub fn candidate_cert_dirs() -> impl Iterator<Item = &'static Path> {
     .filter(|p| p.exists())
 }
 
-/// Deprecated as this isn't sound, use [`init_openssl_env_vars`] instead.
-#[doc(hidden)]
-#[deprecated(note = "this function is not safe, use `init_openssl_env_vars` instead")]
-pub fn init_ssl_cert_env_vars() {
-    unsafe {
-        init_openssl_env_vars();
-    }
-}
-
 /// Probe for SSL certificates on the system, then configure the SSL certificate `SSL_CERT_FILE`
 /// and `SSL_CERT_DIR` environment variables in this process for OpenSSL to use.
 ///
@@ -80,13 +61,6 @@ pub fn init_ssl_cert_env_vars() {
 /// [doc]: https://doc.rust-lang.org/stable/std/env/fn.set_var.html#safety
 pub unsafe fn init_openssl_env_vars() {
     try_init_openssl_env_vars();
-}
-
-/// Deprecated as this isn't sound, use [`try_init_openssl_env_vars`] instead.
-#[doc(hidden)]
-#[deprecated(note = "use try_init_openssl_env_vars instead, this function is not safe")]
-pub fn try_init_ssl_cert_env_vars() -> bool {
-    unsafe { try_init_openssl_env_vars() }
 }
 
 /// Probe for SSL certificates on the system, then configure the SSL certificate `SSL_CERT_FILE`

@@ -1,48 +1,6 @@
 use std::env;
 use std::path::{Path, PathBuf};
 
-/// The OpenSSL environment variable to configure what certificate file to use.
-pub const ENV_CERT_FILE: &'static str = "SSL_CERT_FILE";
-
-/// The OpenSSL environment variable to configure what certificates directory to use.
-pub const ENV_CERT_DIR: &'static str = "SSL_CERT_DIR";
-
-pub struct ProbeResult {
-    pub cert_file: Option<PathBuf>,
-    pub cert_dir: Option<PathBuf>,
-}
-
-/// Probe the system for the directory in which CA certificates should likely be
-/// found.
-///
-/// This will only search known system locations.
-pub fn candidate_cert_dirs() -> impl Iterator<Item = &'static Path> {
-    // see http://gagravarr.org/writing/openssl-certs/others.shtml
-    [
-        "/var/ssl",
-        "/usr/share/ssl",
-        "/usr/local/ssl",
-        "/usr/local/openssl",
-        "/usr/local/etc/openssl",
-        "/usr/local/share",
-        "/usr/lib/ssl",
-        "/usr/ssl",
-        "/etc/openssl",
-        "/etc/pki/ca-trust/extracted/pem",
-        "/etc/pki/tls",
-        "/etc/ssl",
-        "/etc/certs",
-        "/opt/etc/ssl", // Entware
-        #[cfg(target_os = "android")]
-        "/data/data/com.termux/files/usr/etc/tls",
-        #[cfg(target_os = "haiku")]
-        "/boot/system/data/ssl",
-    ]
-    .iter()
-    .map(Path::new)
-    .filter(|p| p.exists())
-}
-
 /// Probe for SSL certificates on the system, then configure the SSL certificate `SSL_CERT_FILE`
 /// and `SSL_CERT_DIR` environment variables in this process for OpenSSL to use.
 ///
@@ -95,25 +53,6 @@ pub unsafe fn try_init_openssl_env_vars() -> bool {
     cert_file.is_some() || cert_dir.is_some()
 }
 
-/// Check whether the OpenSSL `SSL_CERT_FILE` and/or `SSL_CERT_DIR` environment variable is
-/// configured in this process with an existing file or directory.
-///
-/// That being the case would indicate that certificates will be found successfully by OpenSSL.
-///
-/// Returns `true` if either variable is set to an existing file or directory.
-pub fn has_ssl_cert_env_vars() -> bool {
-    let probe = probe_from_env();
-    probe.cert_file.is_some() || probe.cert_dir.is_some()
-}
-
-fn probe_from_env() -> ProbeResult {
-    let var = |name| env::var_os(name).map(PathBuf::from).filter(|p| p.exists());
-    ProbeResult {
-        cert_file: var(ENV_CERT_FILE),
-        cert_dir: var(ENV_CERT_DIR),
-    }
-}
-
 /// Probe the current system for the "cert file" and "cert dir" variables that
 /// OpenSSL typically requires.
 ///
@@ -153,3 +92,64 @@ pub fn probe() -> ProbeResult {
     }
     result
 }
+
+/// Probe the system for the directory in which CA certificates should likely be
+/// found.
+///
+/// This will only search known system locations.
+pub fn candidate_cert_dirs() -> impl Iterator<Item = &'static Path> {
+    // see http://gagravarr.org/writing/openssl-certs/others.shtml
+    [
+        "/var/ssl",
+        "/usr/share/ssl",
+        "/usr/local/ssl",
+        "/usr/local/openssl",
+        "/usr/local/etc/openssl",
+        "/usr/local/share",
+        "/usr/lib/ssl",
+        "/usr/ssl",
+        "/etc/openssl",
+        "/etc/pki/ca-trust/extracted/pem",
+        "/etc/pki/tls",
+        "/etc/ssl",
+        "/etc/certs",
+        "/opt/etc/ssl", // Entware
+        #[cfg(target_os = "android")]
+        "/data/data/com.termux/files/usr/etc/tls",
+        #[cfg(target_os = "haiku")]
+        "/boot/system/data/ssl",
+    ]
+    .iter()
+    .map(Path::new)
+    .filter(|p| p.exists())
+}
+
+/// Check whether the OpenSSL `SSL_CERT_FILE` and/or `SSL_CERT_DIR` environment variable is
+/// configured in this process with an existing file or directory.
+///
+/// That being the case would indicate that certificates will be found successfully by OpenSSL.
+///
+/// Returns `true` if either variable is set to an existing file or directory.
+pub fn has_ssl_cert_env_vars() -> bool {
+    let probe = probe_from_env();
+    probe.cert_file.is_some() || probe.cert_dir.is_some()
+}
+
+fn probe_from_env() -> ProbeResult {
+    let var = |name| env::var_os(name).map(PathBuf::from).filter(|p| p.exists());
+    ProbeResult {
+        cert_file: var(ENV_CERT_FILE),
+        cert_dir: var(ENV_CERT_DIR),
+    }
+}
+
+pub struct ProbeResult {
+    pub cert_file: Option<PathBuf>,
+    pub cert_dir: Option<PathBuf>,
+}
+
+/// The OpenSSL environment variable to configure what certificate file to use.
+pub const ENV_CERT_FILE: &'static str = "SSL_CERT_FILE";
+
+/// The OpenSSL environment variable to configure what certificates directory to use.
+pub const ENV_CERT_DIR: &'static str = "SSL_CERT_DIR";

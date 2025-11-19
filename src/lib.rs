@@ -58,7 +58,7 @@ pub unsafe fn try_init_openssl_env_vars() -> bool {
 ///
 /// The probe result is returned as a [`ProbeResult`] structure here.
 pub fn probe() -> ProbeResult {
-    let mut result = probe_from_env();
+    let mut result = ProbeResult::from_env();
     for certs_dir in candidate_cert_dirs() {
         // cert.pem looks to be an openssl 1.0.1 thing, while
         // certs/ca-certificates.crt appears to be a 0.9.8 thing
@@ -131,21 +131,23 @@ pub fn candidate_cert_dirs() -> impl Iterator<Item = &'static Path> {
 ///
 /// Returns `true` if either variable is set to an existing file or directory.
 pub fn has_ssl_cert_env_vars() -> bool {
-    let probe = probe_from_env();
+    let probe = ProbeResult::from_env();
     probe.cert_file.is_some() || probe.cert_dir.is_some()
-}
-
-fn probe_from_env() -> ProbeResult {
-    let var = |name| env::var_os(name).map(PathBuf::from).filter(|p| p.exists());
-    ProbeResult {
-        cert_file: var(ENV_CERT_FILE),
-        cert_dir: var(ENV_CERT_DIR),
-    }
 }
 
 pub struct ProbeResult {
     pub cert_file: Option<PathBuf>,
     pub cert_dir: Option<PathBuf>,
+}
+
+impl ProbeResult {
+    fn from_env() -> ProbeResult {
+        let var = |name| env::var_os(name).map(PathBuf::from).filter(|p| p.exists());
+        ProbeResult {
+            cert_file: var(ENV_CERT_FILE),
+            cert_dir: var(ENV_CERT_DIR),
+        }
+    }
 }
 
 /// The OpenSSL environment variable to configure what certificate file to use.

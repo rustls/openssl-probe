@@ -60,22 +60,8 @@ pub unsafe fn try_init_openssl_env_vars() -> bool {
 pub fn probe() -> ProbeResult {
     let mut result = ProbeResult::from_env();
     for certs_dir in candidate_cert_dirs() {
-        // cert.pem looks to be an openssl 1.0.1 thing, while
-        // certs/ca-certificates.crt appears to be a 0.9.8 thing
-        let cert_filenames = [
-            "cert.pem",
-            "certs.pem",
-            "ca-bundle.pem",
-            "cacert.pem",
-            "ca-certificates.crt",
-            "certs/ca-certificates.crt",
-            "certs/ca-root-nss.crt",
-            "certs/ca-bundle.crt",
-            "CARootCertificates.pem",
-            "tls-ca-bundle.pem",
-        ];
         if result.cert_file.is_none() {
-            result.cert_file = cert_filenames
+            result.cert_file = CERTIFICATE_FILE_NAMES
                 .iter()
                 .map(|fname| certs_dir.join(fname))
                 .find(|p| p.exists());
@@ -98,30 +84,10 @@ pub fn probe() -> ProbeResult {
 ///
 /// This will only search known system locations.
 pub fn candidate_cert_dirs() -> impl Iterator<Item = &'static Path> {
-    // see http://gagravarr.org/writing/openssl-certs/others.shtml
-    [
-        "/var/ssl",
-        "/usr/share/ssl",
-        "/usr/local/ssl",
-        "/usr/local/openssl",
-        "/usr/local/etc/openssl",
-        "/usr/local/share",
-        "/usr/lib/ssl",
-        "/usr/ssl",
-        "/etc/openssl",
-        "/etc/pki/ca-trust/extracted/pem",
-        "/etc/pki/tls",
-        "/etc/ssl",
-        "/etc/certs",
-        "/opt/etc/ssl", // Entware
-        #[cfg(target_os = "android")]
-        "/data/data/com.termux/files/usr/etc/tls",
-        #[cfg(target_os = "haiku")]
-        "/boot/system/data/ssl",
-    ]
-    .iter()
-    .map(Path::new)
-    .filter(|p| p.exists())
+    CERTIFICATE_DIRS
+        .iter()
+        .map(Path::new)
+        .filter(|p| p.exists())
 }
 
 /// Check whether the OpenSSL `SSL_CERT_FILE` and/or `SSL_CERT_DIR` environment variable is
@@ -149,6 +115,43 @@ impl ProbeResult {
         }
     }
 }
+
+// see http://gagravarr.org/writing/openssl-certs/others.shtml
+const CERTIFICATE_DIRS: &[&str] = &[
+    "/var/ssl",
+    "/usr/share/ssl",
+    "/usr/local/ssl",
+    "/usr/local/openssl",
+    "/usr/local/etc/openssl",
+    "/usr/local/share",
+    "/usr/lib/ssl",
+    "/usr/ssl",
+    "/etc/openssl",
+    "/etc/pki/ca-trust/extracted/pem",
+    "/etc/pki/tls",
+    "/etc/ssl",
+    "/etc/certs",
+    "/opt/etc/ssl", // Entware
+    #[cfg(target_os = "android")]
+    "/data/data/com.termux/files/usr/etc/tls",
+    #[cfg(target_os = "haiku")]
+    "/boot/system/data/ssl",
+];
+
+// cert.pem looks to be an openssl 1.0.1 thing, while
+// certs/ca-certificates.crt appears to be a 0.9.8 thing
+const CERTIFICATE_FILE_NAMES: &[&str] = &[
+    "cert.pem",
+    "certs.pem",
+    "ca-bundle.pem",
+    "cacert.pem",
+    "ca-certificates.crt",
+    "certs/ca-certificates.crt",
+    "certs/ca-root-nss.crt",
+    "certs/ca-bundle.crt",
+    "CARootCertificates.pem",
+    "tls-ca-bundle.pem",
+];
 
 /// The OpenSSL environment variable to configure what certificate file to use.
 pub const ENV_CERT_FILE: &'static str = "SSL_CERT_FILE";

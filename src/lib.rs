@@ -1,4 +1,5 @@
 use std::env;
+use std::ffi::{OsStr, OsString};
 use std::path::{Path, PathBuf};
 
 /// Probe for SSL certificates on the system, then configure the SSL certificate `SSL_CERT_FILE`
@@ -30,27 +31,36 @@ pub unsafe fn try_init_openssl_env_vars() -> bool {
     // returned them unchanged
     if let Some(path) = &cert_file {
         unsafe {
-            put(ENV_CERT_FILE, path);
-        }
-    }
-    if let Some(path) = &cert_dir {
-        unsafe {
-            put(ENV_CERT_DIR, path);
+            put(ENV_CERT_FILE, path.as_os_str());
         }
     }
 
-    unsafe fn put(var: &str, path: &Path) {
+    if !cert_dir.is_empty() {
+        let mut joined = OsString::new();
+        for (i, path) in cert_dir.iter().enumerate() {
+            if i != 0 {
+                joined.push(":");
+            }
+            joined.push(path.as_os_str());
+        }
+
+        unsafe {
+            put(ENV_CERT_DIR, &joined);
+        }
+    }
+
+    unsafe fn put(var: &str, path: &OsStr) {
         // Avoid calling `setenv` if the variable already has the same contents. This avoids a
         // crash when called from out of perl <5.38 (Debian Bookworm is at 5.36), as old versions
         // of perl tend to manipulate the `environ` pointer directly.
-        if env::var_os(var).as_deref() != Some(path.as_os_str()) {
+        if env::var_os(var).as_deref() != Some(path) {
             unsafe {
                 env::set_var(var, path);
             }
         }
     }
 
-    cert_file.is_some() || cert_dir.is_some()
+    cert_file.is_some() || !cert_dir.is_empty()
 }
 
 /// Probe the current system for the "cert file" and "cert dir" variables that
@@ -70,14 +80,9 @@ pub fn probe() -> ProbeResult {
     }
 
     for certs_dir in candidate_cert_dirs() {
-        if result.cert_dir.is_none() {
-            let cert_dir = PathBuf::from(certs_dir);
-            if cert_dir.exists() {
-                result.cert_dir = Some(cert_dir);
-            }
-        }
-        if result.cert_dir.is_some() {
-            break;
+        let cert_dir = PathBuf::from(certs_dir);
+        if cert_dir.exists() {
+            result.cert_dir.push(cert_dir);
         }
     }
 
@@ -103,12 +108,12 @@ pub fn candidate_cert_dirs() -> impl Iterator<Item = &'static Path> {
 /// Returns `true` if either variable is set to an existing file or directory.
 pub fn has_ssl_cert_env_vars() -> bool {
     let probe = ProbeResult::from_env();
-    probe.cert_file.is_some() || probe.cert_dir.is_some()
+    probe.cert_file.is_some() || !probe.cert_dir.is_empty()
 }
 
 pub struct ProbeResult {
     pub cert_file: Option<PathBuf>,
-    pub cert_dir: Option<PathBuf>,
+    pub cert_dir: Vec<PathBuf>,
 }
 
 impl ProbeResult {
@@ -116,7 +121,10 @@ impl ProbeResult {
         let var = |name| env::var_os(name).map(PathBuf::from).filter(|p| p.exists());
         ProbeResult {
             cert_file: var(ENV_CERT_FILE),
-            cert_dir: var(ENV_CERT_DIR),
+            cert_dir: match var(ENV_CERT_DIR) {
+                Some(p) => vec![p],
+                None => vec![],
+            },
         }
     }
 }

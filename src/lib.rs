@@ -59,13 +59,17 @@ pub unsafe fn try_init_openssl_env_vars() -> bool {
 /// The probe result is returned as a [`ProbeResult`] structure here.
 pub fn probe() -> ProbeResult {
     let mut result = ProbeResult::from_env();
-    for certs_dir in candidate_cert_dirs() {
-        if result.cert_file.is_none() {
-            result.cert_file = CERTIFICATE_FILE_NAMES
+    if result.cert_file.is_none() {
+        result.cert_file =
+            CERTIFICATE_FILE_NAMES
                 .iter()
-                .map(|fname| certs_dir.join(fname))
-                .find(|p| p.exists());
-        }
+                .find_map(|p| match Path::new(p).exists() {
+                    true => Some(PathBuf::from(p)),
+                    false => None,
+                });
+    }
+
+    for certs_dir in candidate_cert_dirs() {
         if result.cert_dir.is_none() {
             let cert_dir = certs_dir.join("certs");
             if cert_dir.exists() {
@@ -122,7 +126,7 @@ const CERTIFICATE_DIRS: &[&str] = &[
     "/usr/share/ssl",
     "/usr/local/ssl",
     "/usr/local/openssl",
-    "/usr/local/etc/openssl",
+    "/usr/local/etc/openssl", // MacPorts, https://github.com/rustls/openssl-probe/pull/15
     "/usr/local/share",
     "/usr/lib/ssl",
     "/usr/ssl",
@@ -141,16 +145,35 @@ const CERTIFICATE_DIRS: &[&str] = &[
 // cert.pem looks to be an openssl 1.0.1 thing, while
 // certs/ca-certificates.crt appears to be a 0.9.8 thing
 const CERTIFICATE_FILE_NAMES: &[&str] = &[
-    "cert.pem",
-    "certs.pem",
-    "ca-bundle.pem",
-    "cacert.pem",
-    "ca-certificates.crt",
-    "certs/ca-certificates.crt",
-    "certs/ca-root-nss.crt",
-    "certs/ca-bundle.crt",
-    "CARootCertificates.pem",
-    "tls-ca-bundle.pem",
+    "/etc/ssl/certs/ca-certificates.crt", // Debian, Ubuntu, Gentoo, Joyent SmartOS, etc.
+    #[cfg(target_os = "linux")]
+    "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem", // CentOS, RHEL 7 (should come before RHEL 6)
+    #[cfg(target_os = "linux")]
+    "/etc/pki/tls/certs/ca-bundle.crt", // Fedora, RHEL 6
+    #[cfg(target_os = "linux")]
+    "/etc/ssl/ca-bundle.pem", // OpenSUSE
+    #[cfg(target_os = "linux")]
+    "/etc/pki/tls/cacert.pem", // OpenELEC (a media center Linux distro)
+    #[cfg(any(target_os = "linux", target_os = "openbsd"))]
+    "/etc/ssl/cert.pem", // Alpine Linux, OpenBSD
+    #[cfg(target_os = "freebsd")]
+    "/usr/local/etc/ssl/cert.pem", // FreeBSD
+    #[cfg(target_os = "dragonfly")]
+    "/usr/local/share/certs/ca-root-nss.crt", // DragonFly
+    #[cfg(target_os = "netbsd")]
+    "/etc/openssl/certs/ca-certificates.crt", // NetBSD
+    #[cfg(target_os = "solaris")]
+    "/etc/certs/ca-certificates.crt", // Solaris 11.2+
+    #[cfg(target_os = "illumos")]
+    "/etc/ssl/cacert.pem", // OmniOS, https://github.com/rustls/openssl-probe/pull/22
+    #[cfg(target_os = "illumos")]
+    "/etc/certs/ca-certificates.crt", // OpenIndiana, https://github.com/rustls/openssl-probe/pull/22
+    #[cfg(target_os = "android")]
+    "/data/data/com.termux/files/usr/etc/tls/cert.pem", // Termux on Android, https://github.com/rustls/openssl-probe/pull/2
+    #[cfg(target_os = "haiku")]
+    "/boot/system/data/ssl/CARootCertificates.pem", // Haiku, https://github.com/rustls/openssl-probe/pull/4
+    #[cfg(target_os = "linux")]
+    "/opt/etc/ssl/certs/ca-certificates.crt", // Entware, https://github.com/rustls/openssl-probe/pull/21
 ];
 
 /// The OpenSSL environment variable to configure what certificate file to use.

@@ -71,15 +71,16 @@ pub fn probe() -> ProbeResult {
 
     for certs_dir in candidate_cert_dirs() {
         if result.cert_dir.is_none() {
-            let cert_dir = certs_dir.join("certs");
+            let cert_dir = PathBuf::from(certs_dir);
             if cert_dir.exists() {
                 result.cert_dir = Some(cert_dir);
             }
         }
-        if result.cert_file.is_some() && result.cert_dir.is_some() {
+        if result.cert_dir.is_some() {
             break;
         }
     }
+
     result
 }
 
@@ -121,26 +122,40 @@ impl ProbeResult {
 }
 
 // see http://gagravarr.org/writing/openssl-certs/others.shtml
+// Go's related definitions can be found here:
+// https://github.com/golang/go/tree/master/src/crypto/x509
+// Look at `root_*.go` files for platform-specific files and directories.
+
+#[cfg(target_os = "linux")]
 const CERTIFICATE_DIRS: &[&str] = &[
-    "/var/ssl",
-    "/usr/share/ssl",
-    "/usr/local/ssl",
-    "/usr/local/openssl",
-    "/usr/local/etc/openssl", // MacPorts, https://github.com/rustls/openssl-probe/pull/15
-    "/usr/local/share",
-    "/usr/lib/ssl",
-    "/usr/ssl",
-    "/etc/openssl",
-    "/etc/pki/ca-trust/extracted/pem",
-    "/etc/pki/tls",
-    "/etc/ssl",
-    "/etc/certs",
-    "/opt/etc/ssl", // Entware
-    #[cfg(target_os = "android")]
-    "/data/data/com.termux/files/usr/etc/tls",
-    #[cfg(target_os = "haiku")]
-    "/boot/system/data/ssl",
+    "/etc/ssl/certs",     // SLES 10, SLES 11
+    "/etc/pki/tls/certs", // Fedora, RHEL
 ];
+
+#[cfg(target_os = "freebsd")]
+const CERTIFICATE_DIRS: &[&str] = &[
+    "/etc/ssl/certs",         // FreeBSD 12.2+,
+    "/usr/local/share/certs", // FreeBSD
+];
+
+#[cfg(any(target_os = "illumos", target_os = "solaris"))]
+const CERTIFICATE_DIRS: &[&str] = &["/etc/certs/CA"];
+
+#[cfg(target_os = "netbsd")]
+const CERTIFICATE_DIRS: &[&str] = &["/etc/openssl/certs"];
+
+#[cfg(target_os = "aix")]
+const CERTIFICATE_DIRS: &[&str] = &["/var/ssl/certs"];
+
+#[cfg(not(any(
+    target_os = "linux",
+    target_os = "freebsd",
+    target_os = "illumos",
+    target_os = "solaris",
+    target_os = "netbsd",
+    target_os = "aix"
+)))]
+const CERTIFICATE_DIRS: &[&str] = &["/etc/ssl/certs"];
 
 #[cfg(target_os = "linux")]
 const CERTIFICATE_FILE_NAMES: &[&str] = &[

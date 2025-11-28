@@ -142,39 +142,56 @@ const CERTIFICATE_DIRS: &[&str] = &[
     "/boot/system/data/ssl",
 ];
 
-// cert.pem looks to be an openssl 1.0.1 thing, while
-// certs/ca-certificates.crt appears to be a 0.9.8 thing
+#[cfg(target_os = "linux")]
 const CERTIFICATE_FILE_NAMES: &[&str] = &[
     "/etc/ssl/certs/ca-certificates.crt", // Debian, Ubuntu, Gentoo, Joyent SmartOS, etc.
-    #[cfg(target_os = "linux")]
     "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem", // CentOS, RHEL 7 (should come before RHEL 6)
-    #[cfg(target_os = "linux")]
-    "/etc/pki/tls/certs/ca-bundle.crt", // Fedora, RHEL 6
-    #[cfg(target_os = "linux")]
-    "/etc/ssl/ca-bundle.pem", // OpenSUSE
-    #[cfg(target_os = "linux")]
-    "/etc/pki/tls/cacert.pem", // OpenELEC (a media center Linux distro)
-    #[cfg(any(target_os = "linux", target_os = "openbsd"))]
-    "/etc/ssl/cert.pem", // Alpine Linux, OpenBSD
-    #[cfg(target_os = "freebsd")]
-    "/usr/local/etc/ssl/cert.pem", // FreeBSD
-    #[cfg(target_os = "dragonfly")]
-    "/usr/local/share/certs/ca-root-nss.crt", // DragonFly
-    #[cfg(target_os = "netbsd")]
-    "/etc/openssl/certs/ca-certificates.crt", // NetBSD
-    #[cfg(target_os = "solaris")]
-    "/etc/certs/ca-certificates.crt", // Solaris 11.2+
-    #[cfg(target_os = "illumos")]
-    "/etc/ssl/cacert.pem", // OmniOS, https://github.com/rustls/openssl-probe/pull/22
-    #[cfg(target_os = "illumos")]
-    "/etc/certs/ca-certificates.crt", // OpenIndiana, https://github.com/rustls/openssl-probe/pull/22
-    #[cfg(target_os = "android")]
-    "/data/data/com.termux/files/usr/etc/tls/cert.pem", // Termux on Android, https://github.com/rustls/openssl-probe/pull/2
-    #[cfg(target_os = "haiku")]
-    "/boot/system/data/ssl/CARootCertificates.pem", // Haiku, https://github.com/rustls/openssl-probe/pull/4
-    #[cfg(target_os = "linux")]
+    "/etc/pki/tls/certs/ca-bundle.crt",                  // Fedora, RHEL 6
+    "/etc/ssl/ca-bundle.pem",                            // OpenSUSE
+    "/etc/pki/tls/cacert.pem",                           // OpenELEC (a media center Linux distro)
+    "/etc/ssl/cert.pem",                                 // Alpine Linux
     "/opt/etc/ssl/certs/ca-certificates.crt", // Entware, https://github.com/rustls/openssl-probe/pull/21
 ];
+
+#[cfg(target_os = "freebsd")]
+const CERTIFICATE_FILE_NAMES: &[&str] = &["/usr/local/etc/ssl/cert.pem"];
+
+#[cfg(target_os = "dragonfly")]
+const CERTIFICATE_FILE_NAMES: &[&str] = &["/usr/local/share/certs/ca-root-nss.crt"];
+
+#[cfg(target_os = "netbsd")]
+const CERTIFICATE_FILE_NAMES: &[&str] = &["/etc/openssl/certs/ca-certificates.crt"];
+
+#[cfg(target_os = "openbsd")]
+const CERTIFICATE_FILE_NAMES: &[&str] = &["/etc/ssl/cert.pem"];
+
+#[cfg(target_os = "solaris")] // Solaris 11.2+
+const CERTIFICATE_FILE_NAMES: &[&str] = &["/etc/certs/ca-certificates.crt"];
+
+#[cfg(target_os = "illumos")]
+const CERTIFICATE_FILE_NAMES: &[&str] = &[
+    "/etc/ssl/cacert.pem", // OmniOS, https://github.com/rustls/openssl-probe/pull/22
+    "/etc/certs/ca-certificates.crt", // OpenIndiana, https://github.com/rustls/openssl-probe/pull/22
+];
+
+#[cfg(target_os = "android")] // Termux on Android, https://github.com/rustls/openssl-probe/pull/2
+const CERTIFICATE_FILE_NAMES: &[&str] = &["/data/data/com.termux/files/usr/etc/tls/cert.pem"];
+
+#[cfg(target_os = "haiku")] // https://github.com/rustls/openssl-probe/pull/4
+const CERTIFICATE_FILE_NAMES: &[&str] = &["/boot/system/data/ssl/CARootCertificates.pem"];
+
+#[cfg(not(any(
+    target_os = "linux",
+    target_os = "freebsd",
+    target_os = "dragonfly",
+    target_os = "netbsd",
+    target_os = "openbsd",
+    target_os = "solaris",
+    target_os = "illumos",
+    target_os = "android",
+    target_os = "haiku",
+)))]
+const CERTIFICATE_FILE_NAMES: &[&str] = &["/etc/ssl/certs/ca-certificates.crt"];
 
 /// The OpenSSL environment variable to configure what certificate file to use.
 pub const ENV_CERT_FILE: &'static str = "SSL_CERT_FILE";

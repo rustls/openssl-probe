@@ -140,10 +140,13 @@ const CERTIFICATE_DIRS: &[&str] = &[
     "/etc/pki/tls/certs", // Fedora, RHEL
 ];
 
+// see manpage of certctl(8): https://man.freebsd.org/cgi/man.cgi?query=certctl&sektion=8
+// see security/openssl* ports
 #[cfg(target_os = "freebsd")]
 const CERTIFICATE_DIRS: &[&str] = &[
-    "/etc/ssl/certs",         // FreeBSD 12.2+,
-    "/usr/local/share/certs", // FreeBSD
+    "/etc/ssl/certs",
+    "/usr/local/etc/ssl/certs",
+    "/usr/local/openssl/certs",
 ];
 
 #[cfg(any(target_os = "illumos", target_os = "solaris"))]
@@ -177,7 +180,12 @@ const CERTIFICATE_FILE_NAMES: &[&str] = &[
 ];
 
 #[cfg(target_os = "freebsd")]
-const CERTIFICATE_FILE_NAMES: &[&str] = &["/usr/local/etc/ssl/cert.pem"];
+const CERTIFICATE_FILE_NAMES: &[&str] = &[
+    "/etc/ssl/cert.pem",
+    "/usr/local/etc/ssl/cert.pem",
+    "/usr/local/openssl/cert.pem",
+    "/usr/local/share/certs/ca-root-nss.crt",
+];
 
 #[cfg(target_os = "dragonfly")]
 const CERTIFICATE_FILE_NAMES: &[&str] = &["/usr/local/share/certs/ca-root-nss.crt"];

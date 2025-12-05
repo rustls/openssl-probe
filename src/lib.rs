@@ -140,10 +140,14 @@ const CERTIFICATE_DIRS: &[&str] = &[
     "/etc/pki/tls/certs", // Fedora, RHEL
 ];
 
+// `*/etc/ssl/certs` is the default TRUSTDESTDIR (15+)/CERTDESTDIR (<15) for `certctl(8)`
+// `/usr/local/openssl/certs` is used for OpenSSL from ports
+// https://man.freebsd.org/cgi/man.cgi?query=certctl&sektion=8
 #[cfg(target_os = "freebsd")]
 const CERTIFICATE_DIRS: &[&str] = &[
-    "/etc/ssl/certs",         // FreeBSD 12.2+,
-    "/usr/local/share/certs", // FreeBSD
+    "/etc/ssl/certs",
+    "/usr/local/etc/ssl/certs",
+    "/usr/local/openssl/certs",
 ];
 
 #[cfg(any(target_os = "illumos", target_os = "solaris"))]
@@ -176,8 +180,17 @@ const CERTIFICATE_FILE_NAMES: &[&str] = &[
     "/opt/etc/ssl/certs/ca-certificates.crt", // Entware, https://github.com/rustls/openssl-probe/pull/21
 ];
 
+// `*/etc/ssl/cert.pem` is the default BUNDLE (15+) for `certctl(8)`
+// `/usr/local/openssl/cert.pem` is used for OpenSSL from ports
+// `/usr/local/share/certs/ca-root-nss.crt` is from ca_root_nss from ports
+// https://man.freebsd.org/cgi/man.cgi?query=certctl&sektion=8
 #[cfg(target_os = "freebsd")]
-const CERTIFICATE_FILE_NAMES: &[&str] = &["/usr/local/etc/ssl/cert.pem"];
+const CERTIFICATE_FILE_NAMES: &[&str] = &[
+    "/etc/ssl/cert.pem",
+    "/usr/local/etc/ssl/cert.pem",
+    "/usr/local/openssl/cert.pem",
+    "/usr/local/share/certs/ca-root-nss.crt",
+];
 
 #[cfg(target_os = "dragonfly")]
 const CERTIFICATE_FILE_NAMES: &[&str] = &["/usr/local/share/certs/ca-root-nss.crt"];

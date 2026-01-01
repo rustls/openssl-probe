@@ -136,8 +136,9 @@ impl ProbeResult {
 
 #[cfg(target_os = "linux")]
 const CERTIFICATE_DIRS: &[&str] = &[
-    "/etc/ssl/certs",     // SLES 10, SLES 11
-    "/etc/pki/tls/certs", // Fedora, RHEL
+    "/etc/ssl/certs",             // SLES 10, SLES 11
+    "/etc/pki/tls/certs",         // Fedora, RHEL
+    "/etc/security/certificates", // OpenHarmony, https://developer.huawei.com/consumer/en/doc/best-practices/bpta-network-ca-security#section121091116142117
 ];
 
 #[cfg(target_os = "freebsd")]
@@ -174,6 +175,7 @@ const CERTIFICATE_FILE_NAMES: &[&str] = &[
     "/etc/pki/tls/cacert.pem",                           // OpenELEC (a media center Linux distro)
     "/etc/ssl/cert.pem",                                 // Alpine Linux
     "/opt/etc/ssl/certs/ca-certificates.crt", // Entware, https://github.com/rustls/openssl-probe/pull/21
+    "/etc/ssl/certs/cacert.pem", // OpenHarmony, https://developer.huawei.com/consumer/en/doc/harmonyos-faqs/faqs-network-41
 ];
 
 #[cfg(target_os = "freebsd")]

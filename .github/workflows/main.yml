@@ -1,6 +1,8 @@
 name: CI
 on:
   pull_request:
+  merge_group:
+  workflow_dispatch:
 
 defaults:
   run:
@@ -31,4 +33,3 @@ jobs:
         submodules: true
     - run: rustup update 1.60.0 && rustup default 1.60.0
     - run: cargo test
-

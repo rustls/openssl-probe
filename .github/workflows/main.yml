@@ -4,10 +4,6 @@ on:
   merge_group:
   workflow_dispatch:
 
-defaults:
-  run:
-    shell: bash
-
 jobs:
   test:
     name: Test

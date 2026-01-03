@@ -67,3 +67,15 @@ jobs:
         with:
           components: clippy
       - run: cargo clippy --all-targets -- -D warnings
+
+  semver:
+    name: Check semver compatibility
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Check semver
+        uses: obi1kenobi/cargo-semver-checks-action@v2

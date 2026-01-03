@@ -217,7 +217,7 @@ const CERTIFICATE_FILE_NAMES: &[&str] = &["/boot/system/data/ssl/CARootCertifica
 const CERTIFICATE_FILE_NAMES: &[&str] = &["/etc/ssl/certs/ca-certificates.crt"];
 
 /// The OpenSSL environment variable to configure what certificate file to use.
-pub const ENV_CERT_FILE: &'static str = "SSL_CERT_FILE";
+pub const ENV_CERT_FILE: &str = "SSL_CERT_FILE";
 
 /// The OpenSSL environment variable to configure what certificates directory to use.
-pub const ENV_CERT_DIR: &'static str = "SSL_CERT_DIR";
+pub const ENV_CERT_DIR: &str = "SSL_CERT_DIR";

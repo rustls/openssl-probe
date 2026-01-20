@@ -6,7 +6,8 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/rustls/openssl-probe"
 homepage = "https://github.com/rustls/openssl-probe"
 description = """
-Tool for helping to find SSL certificate locations on the system for OpenSSL
+A library for helping to find system-wide trust anchor ("root") certificate
+locations based on paths typically used by `openssl`.
 """
 readme = "README.md"
 edition = '2021'

@@ -174,6 +174,7 @@ const CERTIFICATE_FILE_NAMES: &[&str] = &[
     "/etc/ssl/ca-bundle.pem",                            // OpenSUSE
     "/etc/pki/tls/cacert.pem",                           // OpenELEC (a media center Linux distro)
     "/etc/ssl/cert.pem",                                 // Alpine Linux
+    "/etc/ssl/certs/ca-bundle.crt",                      // Nix's pkgs.cacert
     "/opt/etc/ssl/certs/ca-certificates.crt", // Entware, https://github.com/rustls/openssl-probe/pull/21
     "/etc/ssl/certs/cacert.pem", // OpenHarmony, https://developer.huawei.com/consumer/en/doc/harmonyos-faqs/faqs-network-41
 ];

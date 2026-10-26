@@ -168,7 +168,7 @@ const CERTIFICATE_DIRS: &[&str] = &["/etc/ssl/certs"];
 
 #[cfg(target_os = "linux")]
 const CERTIFICATE_FILE_NAMES: &[&str] = &[
-    "/etc/ssl/certs/ca-certificates.crt", // Debian, Ubuntu, Gentoo, Joyent SmartOS, etc.
+    "/etc/ssl/certs/ca-certificates.crt", // Debian, Ubuntu, Gentoo
     "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem", // CentOS, RHEL 7 (should come before RHEL 6)
     "/etc/pki/tls/certs/ca-bundle.crt",                  // Fedora, RHEL 6
     "/etc/ssl/ca-bundle.pem",                            // OpenSUSE
@@ -197,6 +197,8 @@ const CERTIFICATE_FILE_NAMES: &[&str] = &["/etc/certs/ca-certificates.crt"];
 const CERTIFICATE_FILE_NAMES: &[&str] = &[
     "/etc/ssl/cacert.pem", // OmniOS, https://github.com/rustls/openssl-probe/pull/22
     "/etc/certs/ca-certificates.crt", // OpenIndiana, https://github.com/rustls/openssl-probe/pull/22
+    "/etc/ssl/certs/ca-certificates.crt", // SmartOS,
+                                      // https://github.com/rustls/openssl-probe/pull/53
 ];
 
 #[cfg(target_os = "android")] // Termux on Android, https://github.com/rustls/openssl-probe/pull/2

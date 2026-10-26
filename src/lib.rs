@@ -156,13 +156,17 @@ const CERTIFICATE_DIRS: &[&str] = &["/etc/openssl/certs"];
 #[cfg(target_os = "aix")]
 const CERTIFICATE_DIRS: &[&str] = &["/var/ssl/certs"];
 
+#[cfg(target_os = "android")]
+const CERTIFICATE_DIRS: &[&str] = &["/system/etc/security/cacerts"];
+
 #[cfg(not(any(
     target_os = "linux",
     target_os = "freebsd",
     target_os = "illumos",
     target_os = "solaris",
     target_os = "netbsd",
-    target_os = "aix"
+    target_os = "aix",
+    target_os = "android",
 )))]
 const CERTIFICATE_DIRS: &[&str] = &["/etc/ssl/certs"];
 
